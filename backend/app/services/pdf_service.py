@@ -1,19 +1,20 @@
 from pathlib import Path
 from typing import Iterable
 
-from pypdf import PdfMerger
+from pypdf import PdfReader, PdfWriter
 
 
 def merge_pdfs(input_paths: Iterable[Path], output_path: Path) -> None:
-    merger = PdfMerger()
+    writer = PdfWriter()
 
     for p in input_paths:
-        merger.append(str(p))
+        reader = PdfReader(str(p))
+        for page in reader.pages:
+            writer.add_page(page)
 
-    # write to a temporary file then move/rename to final path to avoid partial writes
     tmp = output_path.with_suffix(output_path.suffix + ".tmp")
     with tmp.open("wb") as f:
-        merger.write(f)
+        writer.write(f)
     tmp.replace(output_path)
 
 

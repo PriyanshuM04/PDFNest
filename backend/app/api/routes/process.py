@@ -1,4 +1,6 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException, status
+import logging
+import traceback
 from fastapi.responses import FileResponse
 
 from app.schemas.responses import ProcessResponse
@@ -29,7 +31,10 @@ async def process_merge(files: list[UploadFile] = File(...)) -> ProcessResponse:
     try:
         merge_pdfs(saved_paths, out_path)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Merge failed: {exc}")
+        logging.getLogger(__name__).exception("Merge failed")
+        # include limited info in response, full traceback is in server logs
+        tb = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=f"Merge failed on server. See server logs. Error: {str(exc)}\n{tb}")
 
     download_url = f"{settings.api_prefix}/process/download/{out_path.name}"
 
