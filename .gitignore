@@ -216,3 +216,21 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# PDFNest frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# PDFNest backend runtime storage
+backend/storage/uploads/*
+backend/storage/outputs/*
+!backend/storage/uploads/.gitkeep
+!backend/storage/outputs/.gitkeep
+
+# Local environment files
+frontend/.env
+backend/.env
+
+# TypeScript build cache
+*.tsbuildinfo
