@@ -13,7 +13,9 @@ import type { ToolId } from "../tools/toolTypes";
 export function HomePage() {
   const [selectedToolId, setSelectedToolId] = useState<ToolId>("merge");
   const [files, setFiles] = useState<File[]>([]);
-  const [progress] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [processing, setProcessing] = useState(false);
+  const [result, setResult] = useState<{ filename: string; downloadUrl: string } | null>(null);
   const selectedTool = useMemo(
     () => tools.find((tool) => tool.id === selectedToolId) ?? tools[0],
     [selectedToolId],
@@ -25,6 +27,39 @@ export function HomePage() {
     setFiles([]);
   }
 
+  async function handleProcess() {
+    setProcessing(true);
+    setProgress(0);
+    setResult(null);
+
+    try {
+      const { processTool } = await import("../services/api");
+      const fields: Record<string, string> = {};
+      // handle a few tool-specific fields briefly
+      if (selectedTool.id === "split") {
+        fields.page_range = "1-1"; // placeholder — UI for range to be added
+      }
+
+      const resp = await processTool(selectedTool.id, files, fields, (p) => setProgress(p));
+      // support both snake_case and camelCase responses
+      const filename = (resp as any).filename ?? (resp as any).fileName ?? (resp as any).file_id;
+      const downloadUrl = (resp as any).download_url ?? (resp as any).downloadUrl ?? (resp as any).downloadUrl;
+      if (filename && downloadUrl) {
+        const base = (import.meta.env.VITE_API_BASE as string) || "http://127.0.0.1:8000";
+        const finalUrl = downloadUrl.startsWith("/") ? `${base}${downloadUrl}` : downloadUrl;
+        setResult({ filename, downloadUrl: finalUrl });
+      } else {
+        console.error("Unexpected process response", resp);
+      }
+      setProgress(100);
+    } catch (err) {
+      // TODO: surface error to the user
+      console.error(err);
+    } finally {
+      setProcessing(false);
+    }
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
       <section className="grid gap-4">
@@ -32,11 +67,12 @@ export function HomePage() {
           <ToolSelector tools={tools} selectedToolId={selectedToolId} onSelectTool={handleSelectTool} />
           <button
             type="button"
-            disabled={files.length === 0}
+            disabled={files.length === 0 || processing}
+            onClick={handleProcess}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-ink px-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
           >
             <Play size={16} />
-            Process
+            {processing ? "Processing..." : "Process"}
           </button>
         </div>
 
@@ -48,7 +84,7 @@ export function HomePage() {
         />
 
         <ProgressBar value={progress} label="Processing progress" />
-        <DownloadResult />
+        <DownloadResult filename={result?.filename} downloadUrl={result?.downloadUrl} />
       </section>
 
       <aside className="grid content-start gap-4">
