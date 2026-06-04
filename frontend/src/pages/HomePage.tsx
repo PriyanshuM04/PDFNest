@@ -134,7 +134,12 @@ export function HomePage() {
           )}
         </section>
 
-        <PdfThumbnailGrid fileUrl={previewUrl} onLoadSuccess={(numPages) => setPageCount(numPages)} />
+        <PdfThumbnailGrid
+          fileUrl={previewUrl}
+          onLoadSuccess={(numPages) => setPageCount(numPages)}
+          enableReorder={selectedTool.id === "reorder-pages"}
+          onOrderChange={(order) => setOptions((s) => ({ ...s, order: order.join(",") }))}
+        />
       </aside>
     </div>
   );
