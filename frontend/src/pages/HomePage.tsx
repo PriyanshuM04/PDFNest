@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { FileText, Play } from "lucide-react";
 
 import { DownloadResult } from "../components/DownloadResult";
@@ -7,6 +7,7 @@ import { PdfThumbnailGrid } from "../components/PdfThumbnailGrid";
 import { ProgressBar } from "../components/ProgressBar";
 import { ToolSelector } from "../components/ToolSelector";
 import { ToolOptions } from "../components/ToolOptions";
+import { ErrorBanner } from "../components/ErrorBanner";
 import { usePdfPreview } from "../hooks/usePdfPreview";
 import { tools } from "../tools/toolConfig";
 import type { ToolId } from "../tools/toolTypes";
@@ -18,6 +19,7 @@ export function HomePage() {
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState<{ filename: string; downloadUrl: string } | null>(null);
   const [options, setOptions] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
   const selectedTool = useMemo(
     () => tools.find((tool) => tool.id === selectedToolId) ?? tools[0],
     [selectedToolId],
@@ -50,6 +52,15 @@ export function HomePage() {
     setProcessing(true);
     setProgress(0);
     setResult(null);
+    setError(null);
+
+    // client-side validation for common required fields
+    const validation = validateOptions(selectedTool.id, options, files);
+    if (validation) {
+      setError(validation);
+      setProcessing(false);
+      return;
+    }
 
     try {
       const { processTool } = await import("../services/api");
@@ -67,8 +78,8 @@ export function HomePage() {
       }
       setProgress(100);
     } catch (err) {
-      // TODO: surface error to the user
       console.error(err);
+      setError((err as Error).message ?? String(err));
     } finally {
       setProcessing(false);
     }
@@ -76,6 +87,46 @@ export function HomePage() {
 
   function handleOptionChange(name: string, value: string) {
     setOptions((s) => ({ ...s, [name]: value }));
+  }
+
+  function validateOptions(toolId: string, opts: Record<string, string>, files: File[]) {
+    const hasFile = files.length > 0;
+    switch (toolId) {
+      case "merge":
+        if (!hasFile) return "Please select at least one PDF to merge.";
+        return null;
+      case "split":
+        if (!hasFile) return "Please select a PDF to split.";
+        if (!opts.page_range) return "Please enter a page range (e.g. 1-3).";
+        if (!/^\d+-\d+$/.test(opts.page_range)) return "Page range must be in format start-end.";
+        return null;
+      case "remove-pages":
+        if (!hasFile) return "Please select a PDF.";
+        if (!opts.pages) return "Enter comma-separated pages to remove (e.g. 2,4).";
+        return null;
+      case "reorder-pages":
+        if (!hasFile) return "Please select a PDF.";
+        if (!opts.order) return "Reorder the pages using thumbnails before processing.";
+        return null;
+      case "images-to-pdf":
+        if (!hasFile) return "Please select at least one image.";
+        return null;
+      case "encrypt":
+      case "decrypt":
+        if (!hasFile) return "Please select a PDF.";
+        if (!opts.password) return "Please enter a password.";
+        return null;
+      case "compress":
+        if (!hasFile) return "Please select a PDF.";
+        return null;
+      case "rotate":
+        if (!hasFile) return "Please select a PDF.";
+        if (!opts.pages) return "Enter pages to rotate (e.g. 1,3).";
+        if (!opts.degrees) return "Enter degrees (90,180,270).";
+        return null;
+      default:
+        return null;
+    }
   }
 
   return (
@@ -101,8 +152,9 @@ export function HomePage() {
           onFilesChange={setFiles}
         />
 
-        <div className="mt-4">
+        <div className="mt-4 grid gap-3">
           <ToolOptions toolId={selectedTool.id} values={options} onChange={handleOptionChange} />
+          <ErrorBanner message={error} />
         </div>
 
         <ProgressBar value={progress} label="Processing progress" />
