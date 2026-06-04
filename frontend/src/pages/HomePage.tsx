@@ -6,6 +6,7 @@ import { FileDropzone } from "../components/FileDropzone";
 import { PdfThumbnailGrid } from "../components/PdfThumbnailGrid";
 import { ProgressBar } from "../components/ProgressBar";
 import { ToolSelector } from "../components/ToolSelector";
+import { ToolOptions } from "../components/ToolOptions";
 import { usePdfPreview } from "../hooks/usePdfPreview";
 import { tools } from "../tools/toolConfig";
 import type { ToolId } from "../tools/toolTypes";
@@ -16,6 +17,7 @@ export function HomePage() {
   const [progress, setProgress] = useState(0);
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState<{ filename: string; downloadUrl: string } | null>(null);
+  const [options, setOptions] = useState<Record<string, string>>({});
   const selectedTool = useMemo(
     () => tools.find((tool) => tool.id === selectedToolId) ?? tools[0],
     [selectedToolId],
@@ -34,12 +36,7 @@ export function HomePage() {
 
     try {
       const { processTool } = await import("../services/api");
-      const fields: Record<string, string> = {};
-      // handle a few tool-specific fields briefly
-      if (selectedTool.id === "split") {
-        fields.page_range = "1-1"; // placeholder — UI for range to be added
-      }
-
+      const fields: Record<string, string> = { ...options };
       const resp = await processTool(selectedTool.id, files, fields, (p) => setProgress(p));
       // support both snake_case and camelCase responses
       const filename = (resp as any).filename ?? (resp as any).fileName ?? (resp as any).file_id;
@@ -58,6 +55,10 @@ export function HomePage() {
     } finally {
       setProcessing(false);
     }
+  }
+
+  function handleOptionChange(name: string, value: string) {
+    setOptions((s) => ({ ...s, [name]: value }));
   }
 
   return (
@@ -82,6 +83,10 @@ export function HomePage() {
           acceptsImages={selectedTool.acceptsImages}
           onFilesChange={setFiles}
         />
+
+        <div className="mt-4">
+          <ToolOptions toolId={selectedTool.id} values={options} onChange={handleOptionChange} />
+        </div>
 
         <ProgressBar value={progress} label="Processing progress" />
         <DownloadResult filename={result?.filename} downloadUrl={result?.downloadUrl} />
