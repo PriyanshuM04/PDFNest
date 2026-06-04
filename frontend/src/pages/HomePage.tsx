@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { useToast } from "../contexts/toast";
 import { FileText, Play } from "lucide-react";
 
 import { DownloadResult } from "../components/DownloadResult";
@@ -27,6 +28,7 @@ export function HomePage() {
   const previewPages = usePdfPreview(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pageCount, setPageCount] = useState(0);
+  const { push: pushToast } = useToast();
 
   function handleSelectTool(toolId: ToolId) {
     setSelectedToolId(toolId);
@@ -73,13 +75,21 @@ export function HomePage() {
         const base = (import.meta.env.VITE_API_BASE as string) || "http://127.0.0.1:8000";
         const finalUrl = downloadUrl.startsWith("/") ? `${base}${downloadUrl}` : downloadUrl;
         setResult({ filename, downloadUrl: finalUrl });
+        // show success toast
+        try {
+          pushToast({ type: "success", message: "File ready to download" });
+        } catch {}
       } else {
         console.error("Unexpected process response", resp);
       }
       setProgress(100);
     } catch (err) {
       console.error(err);
-      setError((err as Error).message ?? String(err));
+      const msg = (err as Error).message ?? String(err);
+      setError(msg);
+      try {
+        pushToast({ type: "error", message: msg });
+      } catch {}
     } finally {
       setProcessing(false);
     }
