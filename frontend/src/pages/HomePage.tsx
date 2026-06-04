@@ -23,11 +23,28 @@ export function HomePage() {
     [selectedToolId],
   );
   const previewPages = usePdfPreview(0);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [pageCount, setPageCount] = useState(0);
 
   function handleSelectTool(toolId: ToolId) {
     setSelectedToolId(toolId);
     setFiles([]);
   }
+
+  useEffect(() => {
+    // show preview for the first selected PDF file
+    if (files.length > 0) {
+      const f = files[0];
+      if (f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")) {
+        const url = URL.createObjectURL(f);
+        setPreviewUrl(url);
+        return () => URL.revokeObjectURL(url);
+      }
+    }
+
+    setPreviewUrl(null);
+    setPageCount(0);
+  }, [files]);
 
   async function handleProcess() {
     setProcessing(true);
@@ -117,7 +134,7 @@ export function HomePage() {
           )}
         </section>
 
-        <PdfThumbnailGrid pages={previewPages} />
+        <PdfThumbnailGrid fileUrl={previewUrl} onLoadSuccess={(numPages) => setPageCount(numPages)} />
       </aside>
     </div>
   );
