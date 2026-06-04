@@ -171,6 +171,13 @@ Temporary files are stored under `backend/storage`. A root `render.yaml` is incl
 - Output directory: `dist`
 - Environment variable: `VITE_API_BASE=https://your-render-service.onrender.com`
 
+Quick Vercel steps:
+
+- Sign in to Vercel and create a new project from this GitHub repo.
+- Set the project root to `frontend`.
+- Add environment variable `VITE_API_BASE` pointing to your backend (see Render URL).
+- Deploy — Vercel will run `npm run build` and publish the `dist` output.
+
 ### Backend on Render
 
 - Root directory: `backend`
@@ -179,6 +186,16 @@ Temporary files are stored under `backend/storage`. A root `render.yaml` is incl
 - Environment variable: `FRONTEND_ORIGIN=https://your-vercel-app.vercel.app`
 
 Note: `render.yaml` is included at the repo root as a Render service blueprint. You can import it in Render or create a new Python web service with the same build and start commands.
+
+Quick Render steps:
+
+- In Render, create a new Web Service and connect the repository.
+- Choose the `backend` folder as the root (or import `render.yaml` to auto-configure).
+- Set the Build Command to: `pip install -r requirements.txt`.
+- Set the Start Command to: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+- Add the environment variables `FRONTEND_ORIGIN` and any `MAX_UPLOAD_MB` / `FILE_EXPIRY_MINUTES`.
+
+When Render builds, it will expose a public URL like `https://your-service.onrender.com` — use that as `VITE_API_BASE` in Vercel.
 
 ## Screenshots
 
@@ -204,4 +221,12 @@ git push origin main
 ```
 
 Or for smaller commits, use the suggested messages shown in the project progress notes.
+
+Quick verification after deploy
+
+1. Start the backend locally or confirm Render URL: `curl https://your-service.onrender.com/api/health`
+2. Build + deploy frontend on Vercel and confirm the UI loads and `VITE_API_BASE` points to the backend.
+3. Upload a test PDF from the UI and verify a download link appears.
+
+If you want, I can create a `DEPLOY.md` with step-by-step screenshots and the exact Render import flow.
 
