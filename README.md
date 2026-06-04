@@ -142,13 +142,13 @@ Frontend runs at:
 http://localhost:5173
 ```
 
-Create `frontend/.env` when needed:
+Create `frontend/.env` when needed (use `frontend/.env.example` as a template):
 
 ```env
-VITE_API_BASE_URL=http://localhost:8000/api
+VITE_API_BASE=http://localhost:8000
 ```
 
-Create `backend/.env` when needed:
+Create `backend/.env` when needed (use `backend/.env.example` as a template):
 
 ```env
 FRONTEND_ORIGIN=http://localhost:5173
@@ -169,7 +169,7 @@ Temporary files are stored under `backend/storage`. A root `render.yaml` is incl
 - Root directory: `frontend`
 - Build command: `npm run build`
 - Output directory: `dist`
-- Environment variable: `VITE_API_BASE_URL=https://your-render-service.onrender.com/api`
+- Environment variable: `VITE_API_BASE=https://your-render-service.onrender.com`
 
 ### Backend on Render
 
@@ -177,6 +177,8 @@ Temporary files are stored under `backend/storage`. A root `render.yaml` is incl
 - Build command: `pip install -r requirements.txt`
 - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - Environment variable: `FRONTEND_ORIGIN=https://your-vercel-app.vercel.app`
+
+Note: `render.yaml` is included at the repo root as a Render service blueprint. You can import it in Render or create a new Python web service with the same build and start commands.
 
 ## Screenshots
 
@@ -190,4 +192,16 @@ Screenshots will be added after the first UI checkpoint is running locally.
 - Phase 4: PDF thumbnails and page selection
 - Phase 5: Remaining PDF utilities
 - Phase 6: Cleanup service and deployment polish
+
+## Pushing a checkpoint
+
+When you want to push a stable checkpoint (e.g., after finishing core features and integration), use:
+
+```bash
+git add .
+git commit -m "chore: integrate frontend + backend; add processing endpoints, PDF helpers, previews, and reorder UI"
+git push origin main
+```
+
+Or for smaller commits, use the suggested messages shown in the project progress notes.
 
