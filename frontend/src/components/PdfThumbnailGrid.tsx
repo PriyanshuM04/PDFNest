@@ -71,7 +71,7 @@ export function PdfThumbnailGrid({ fileUrl, onLoadSuccess, enableReorder = false
               enableReorder ? "cursor-grab" : ""
             }`}
           >
-            <Page pageNumber={pageNumber} width={200} renderText={false} />
+            <Page pageNumber={pageNumber} width={200} renderTextLayer={false} />
             {enableReorder && (
               <div className="absolute mt-1 ml-1 rounded-sm bg-white/80 px-2 py-1 text-xs font-medium">{pageNumber}</div>
             )}
