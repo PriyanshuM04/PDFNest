@@ -230,3 +230,36 @@ Quick verification after deploy
 
 If you want, I can create a `DEPLOY.md` with step-by-step screenshots and the exact Render import flow.
 
+**Live Demo & Post‑deploy Checklist**
+
+- **Frontend (Vercel):** https://pdf-nest-eight.vercel.app
+- **Backend (Render):** https://pdfnest-backend.onrender.com
+
+Quick verification (replace URLs above if yours differ):
+
+1. Health check (backend):
+
+```bash
+curl -i https://pdfnest-backend.onrender.com/api/health
+```
+
+2. Quick merge test (use a small `sample.pdf`):
+
+```bash
+curl -F "files=@sample.pdf" https://pdfnest-backend.onrender.com/api/process/merge
+```
+
+3. Open the frontend and try upload → process → download at:
+
+```
+https://pdf-nest-eight.vercel.app
+```
+
+Deployment notes:
+
+- After deploying the frontend on Vercel, set the `FRONTEND_ORIGIN` env var on Render to your Vercel origin (including `https://`) and restart the backend so CORS is correct.
+- Ensure `VITE_API_BASE` on Vercel points to the Render backend URL (no trailing slash).
+- Remove any temporary test files used during verification (e.g., `sample.pdf`).
+
+If you want, I can add a small GitHub Action that runs the health check after deploy and reports status.
+
